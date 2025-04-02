@@ -37,7 +37,7 @@ class GeminiAgent:
         For each step, if a selector is required, the system should first search the DOM using a combination of tag names, attributes, and text content before proceeding. 
         Ensure the automation system logs each step and selector it identifies. 
         Return the plan in this exact JSON format. Make sure the JSON format is correct and doesn't contain extra text, formatting issues, or broken syntax.
-        
+
         Example for "login to github":
         {{
             "steps": [
@@ -105,7 +105,7 @@ class GeminiAgent:
                         "type": "click",
                         "target": "search box",
                         "value": "",
-                        "selectors": ["[data-target='qbsearch-input.inputButton']", "[name='q']"]
+                        "selectors": ["[data-target='qbsearch-input.inputButton']"]
                     }}
                 }},
                 {{
@@ -115,17 +115,17 @@ class GeminiAgent:
                         "type": "type",
                         "target": "search input",
                         "value": "python projects",
-                        "selectors": ["input[name='q']", "#query-builder-test"]
+                        "selectors": ["#query-builder-test"]
                     }}
                 }},
                 {{
                     "step_number": 4,
-                    "description": "Submit search",
+                    "description": "Press Enter to submit search",
                     "action": {{
-                        "type": "submit",
-                        "target": "search form",
-                        "value": "",
-                        "selectors": ["[type='submit']", ".header-search-button"]
+                        "type": "press",
+                        "target": "keyboard",
+                        "value": "Enter",
+                        "selectors": []
                     }}
                 }}
             ]

@@ -27,8 +27,8 @@ async def test_google_search(browser):
         # Test cases
     test_commands = [
         # "go to duckduckgo and search for cars in images and open 2nd image",
-        # "login to github.com and search python and click the 2nd result",
-        "go to google.com and search for headphones",
+        "login to github.com and search python and click the 2nd result",
+        # "go to reddit.com and search for headphones",
         # "go to github and search for python projects. Open 3rd one !"
     ]
     
