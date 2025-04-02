@@ -105,7 +105,7 @@ class Browser:
                 continue
 
     async def interact(self, command: str) -> dict:
-        """Get LLM to plan actions for a natural language command"""
+        """Execute a natural language command using LLM guidance"""
         try:
             # Get current page content
             page_content = await self.page.content()
@@ -114,22 +114,39 @@ class Browser:
             logger.info(f"\nProcessing command: {command}")
             plan = await self.agent.plan_actions(command, page_content)
             
-            if not plan:
+            if not plan or not plan.get("steps"):
                 return {
                     "success": False,
                     "message": "Failed to generate action plan",
                     "error_type": "PlanningError"
                 }
             
-            # For now, just return the plan
+            # Parse plan into executable actions
+            actions = self.parser.parse_plan(plan)
+            logger.info(f"Parsed actions: {actions}")
+            
+            # Execute each action
+            for action in actions:
+                logger.info(f"Executing action: {action}")
+                # Handle cookie banners and popups before each action
+                await self._handle_cookie_banners()
+                result = await self.executor.execute_action(self.page, action)
+                logger.info(f"Action result: {result}")
+                
+                if not result["success"]:
+                    logger.error(f"Action failed: {result['message']}")
+                    return result
+                    
+                logger.info(f"Successfully executed action: {action['action']}")
+                await self._add_human_delay()
+            
             return {
                 "success": True,
-                "message": "Generated plan successfully",
-                "plan": plan
+                "message": "Command executed successfully"
             }
             
         except Exception as e:
-            logger.error(f"Error during planning: {e}")
+            logger.error(f"Error during interaction: {e}")
             return {
                 "success": False,
                 "message": f"Unexpected error: {str(e)}",

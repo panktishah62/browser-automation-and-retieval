@@ -1,48 +1,112 @@
 from typing import Dict, List
 import logging
+from playwright.async_api import TimeoutError, Page
 
 logger = logging.getLogger("ai-browser-agent")
 
 class CommandExecutor:
     """Executes browser commands based on LLM-provided strategies"""
     
-    async def execute_action(self, page, action: Dict) -> Dict:
+    async def execute_action(self, page: Page, action: Dict) -> Dict:
         """Execute a single browser action"""
         try:
             action_type = action["action"]
             
-            if action_type == "goto":
+            if action_type == "navigation":
+                logger.info(f"Navigating to: {action['value']}")
                 response = await page.goto(
-                    action["url"],
+                    action["value"],
                     wait_until="networkidle",
-                    timeout=30000
+                    timeout=60000
                 )
-                return {"success": bool(response and response.status < 400)}
+                # Wait for page to be ready
+                await page.wait_for_load_state("domcontentloaded")
+                success = bool(response and response.status < 400)
+                logger.info(f"Navigation {'successful' if success else 'failed'}")
+                return {"success": success}
                 
             elif action_type == "click":
-                await page.click(action["selector"])
-                return {"success": True}
+                for selector in action["selectors"]:
+                    try:
+                        logger.info(f"Attempting to click: {selector}")
+                        element = await page.wait_for_selector(
+                            selector,
+                            state="visible",
+                            timeout=10000
+                        )
+                        if element:
+                            await element.click()
+                            logger.info(f"Successfully clicked: {selector}")
+                            return {"success": True}
+                    except Exception as e:
+                        logger.error(f"Click action failed for selector {selector}: {e}")
+                        continue
+                return {"success": False, "message": "Click action failed for all selectors"}
                 
-            elif action_type == "fill":
-                await page.fill(action["selector"], action["text"])
-                return {"success": True}
+            elif action_type == "type":
+                for selector in action["selectors"]:
+                    try:
+                        logger.info(f"Attempting to type into: {selector}")
+                        element = await page.wait_for_selector(
+                            selector,
+                            state="visible",
+                            timeout=10000
+                        )
+                        if element:
+                            await element.fill(action["value"])
+                            logger.info(f"Successfully typed into: {selector}")
+                            return {"success": True}
+                    except Exception as e:
+                        logger.error(f"Type action failed for selector {selector}: {e}")
+                        continue
+                return {"success": False, "message": "Type action failed for all selectors"}
                 
             elif action_type == "wait":
-                await page.wait_for_timeout(action["seconds"] * 1000)
-                return {"success": True}
+                if action.get("selectors"):
+                    logger.info(f"Waiting for selectors: {action['selectors']}")
+                    for selector in action["selectors"]:
+                        try:
+                            await page.wait_for_selector(
+                                selector,
+                                state="visible",
+                                timeout=int(action["value"])
+                            )
+                            logger.info(f"Successfully found selector: {selector}")
+                            return {"success": True}
+                        except TimeoutError:
+                            logger.warning(f"Timeout waiting for selector: {selector}")
+                            continue
+                    return {"success": False, "message": "Wait condition not met"}
+                else:
+                    logger.info(f"Waiting for {action['value']}ms")
+                    await page.wait_for_timeout(int(action["value"]) * 1000)
+                    logger.info("Wait completed")
+                    return {"success": True}
                 
             elif action_type == "submit":
-                await page.click(action["selector"])
-                await page.wait_for_load_state("networkidle")
-                return {"success": True}
-                
-            elif action_type == "verify":
+                # Try different submit strategies
                 try:
+                    # First try to submit using Enter key on active element
+                    await page.keyboard.press('Enter')
+                    await page.wait_for_load_state("networkidle")
+                    return {"success": True}
+                except Exception:
+                    # If Enter key doesn't work, try clicking submit buttons/forms
                     for selector in action["selectors"]:
-                        await page.wait_for_selector(selector, timeout=5000)
-                        return {"success": True}
-                except:
-                    return {"success": False, "message": "Verification failed"}
+                        try:
+                            element = await page.wait_for_selector(
+                                selector,
+                                state="visible",
+                                timeout=10000
+                            )
+                            if element:
+                                await element.click()
+                                await page.wait_for_load_state("networkidle")
+                                return {"success": True}
+                        except Exception as e:
+                            logger.error(f"Submit action failed for selector {selector}: {e}")
+                            continue
+                return {"success": False, "message": "Submit action failed"}
                 
             return {
                 "success": False,

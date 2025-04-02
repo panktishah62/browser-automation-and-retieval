@@ -13,7 +13,7 @@ async def test_llm():
     load_dotenv()
     
     # Initialize Gemini agent
-    api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment variables")
     

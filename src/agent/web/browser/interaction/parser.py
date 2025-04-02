@@ -59,24 +59,37 @@ class CommandParser:
         
         raise BrowserError(f"Could not parse command: {command}")
 
-    def _get_selector_for_input(self, description: str) -> str:
-        """Convert input description to a CSS selector."""
+    def _get_selector_for_input(self, description: str) -> List[str]:
+        """Get a list of possible selectors for an input field."""
         description = description.lower()
         
         # Common input field patterns
         selectors = {
-            "search box": "input[type='search'], input[name*='search'], input[placeholder*='search']",
-            "username": "input[type='text'][name*='user'], input[name='username'], input[placeholder*='username']",
-            "password": "input[type='password']",
-            "email": "input[type='email']"
+            "search": [
+                "input[name='q']",
+                "input[title='Search']",
+                "input[type='search']",
+                "input[aria-label*='search' i]",
+                "textarea[name='q']",
+                "textarea[aria-label*='search' i]"
+            ],
+            "username": [
+                "input[type='text'][name*='user' i]",
+                "input[name='username']",
+                "input[id*='username' i]"
+            ],
+            "password": [
+                "input[type='password']",
+                "input[name*='pass' i]",
+                "input[id*='password' i]"
+            ]
         }
         
-        for key, selector in selectors.items():
+        for key, selector_list in selectors.items():
             if key in description:
-                return selector
+                return selector_list
                 
-        # Default to looking for input with matching attributes
-        return f"input[placeholder*='{description}'], input[name*='{description}'], input[aria-label*='{description}']"
+        return [f"input[placeholder*='{description}' i]", f"input[aria-label*='{description}' i]"]
 
     def _get_selector_for_element(self, description: str) -> str:
         """Convert element description to a CSS selector."""
@@ -102,40 +115,14 @@ class CommandParser:
         browser_actions = []
         
         for step in plan.get("steps", []):
-            action_type = step["action_type"]
-            details = step["details"]
-            
-            if action_type == "navigation":
-                browser_actions.append({
-                    "action": "goto",
-                    "url": details["url"]
-                })
-                
-            elif action_type == "click":
-                # Try each selector in order
-                for selector in details["selectors"]:
-                    browser_actions.append({
-                        "action": "click",
-                        "selector": selector
-                    })
-                    
-            elif action_type == "input":
-                browser_actions.append({
-                    "action": "fill",
-                    "selector": details["selectors"][0],  # Use first selector
-                    "text": details["text"]
-                })
-                
-            elif action_type == "wait":
-                browser_actions.append({
-                    "action": "wait",
-                    "seconds": details.get("seconds", 1)
-                })
-                
-            elif action_type == "verify":
-                browser_actions.append({
-                    "action": "verify",
-                    "selectors": details["selectors"]
-                })
+            action = step["action"]
+            action_type = action["type"]
+            details = {
+                "action": action_type,
+                "target": action["target"],
+                "value": action.get("value", ""),
+                "selectors": action.get("selectors", [])
+            }
+            browser_actions.append(details)
         
         return browser_actions 

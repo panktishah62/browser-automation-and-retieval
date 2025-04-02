@@ -10,7 +10,7 @@ from src.agent.llm.gemini_client import GeminiAgent
 
 
 
-async def test_google_search():
+async def test_google_search(browser):
 
     logger = setup_logging()
     
@@ -18,7 +18,7 @@ async def test_google_search():
     load_dotenv()
     
     # Initialize Gemini agent
-    api_key = os.getenv("GOOGLE_GEMINI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY not found in environment variables")
         
@@ -26,7 +26,8 @@ async def test_google_search():
         
         # Test cases
     test_commands = [
-        "go to google.com and search for python tutorials",
+        # "go to youtube and search for python projects and Wait for results to load and click on 2nd result",
+        "go to duckduckgo and search for cars in images and open 2nd image",
         # "login to github.com with username 'test' and password 'test123'",
         # "go to amazon.com and search for headphones",
         # "go to github and search for python projects. Open 3rd one !"
@@ -35,104 +36,21 @@ async def test_google_search():
     for command in test_commands:
             logger.info(f"\nTesting command: {command}")
             try:
-                plan = await agent.plan_actions(command)
-                if plan:
-                    logger.info("Successfully generated plan:")
-                    logger.info(f"Description: {plan.get('plan_description')}")
-                    logger.info("\nSteps:")
-                    for step in plan.get('steps', []):
-                        logger.info(f"\nStep {step.get('step_number')}:")
-                        logger.info(f"Description: {step.get('description')}")
-                        logger.info(f"Action: {step.get('action')}")
-                else:
-                    logger.warning("Failed to generate plan")
+                await browser.interact(command)
+                # plan = await agent.plan_actions(command)
+                # if plan:
+                #     logger.info("Successfully generated plan:")
+                #     logger.info(f"Description: {plan.get('plan_description')}")
+                #     logger.info("\nSteps:")
+                #     for step in plan.get('steps', []):
+                #         logger.info(f"\nStep {step.get('step_number')}:")
+                #         logger.info(f"Description: {step.get('description')}")
+                #         logger.info(f"Action: {step.get('action')}")
+                # else:
+                #     logger.warning("Failed to generate plan")
             except Exception as e:
                 logger.error(f"Error: {str(e)}")
 
-
-# async def test_github_navigation(browser):
-#     """Test GitHub navigation."""
-#     commands = [
-#         "go to github.com",
-#         "type 'playwright-python' into search box",
-#         "click search button",
-#         "wait for search results"
-#     ]
-    
-#     for command in commands:
-#         print(f"\nExecuting: {command}")
-#         result = await browser.interact(command)
-#         print(f"Result: {result}")
-
-# async def test_login(browser):
-#     """Test login functionality."""
-#     commands = [
-#         "go to github.com/login",
-#         f"login to github with username \"{os.getenv('GITHUB_USERNAME')}\" and password \"{os.getenv('GITHUB_PASSWORD')}\"",
-#         "wait for avatar"  # Usually indicates successful login
-#     ]
-    
-#     for command in commands:
-#         print(f"\nExecuting: {command}")
-#         result = await browser.interact(command)
-#         print(f"Result: {result}")
-
-# async def test_reddit_browsing(browser):
-#     """Test Reddit browsing functionality."""
-#     commands = [
-#         "go to reddit.com",
-#         "type 'python automation' into search box",
-#         "click search button",
-#         "wait for search results"
-#     ]
-    
-#     for command in commands:
-#         print(f"\nExecuting: {command}")
-#         result = await browser.interact(command)
-#         print(f"Result: {result}")
-
-# async def test_github_project_navigation(browser):
-#     """Test GitHub search and project navigation."""
-#     commands = [
-#         "go to github and search for python projects. Open 3rd one !"
-#     ]
-    
-#     for command in commands:
-#         print(f"\nExecuting: {command}")
-#         result = await browser.interact(command)
-#         print(f"Result: {result}")
-#         await asyncio.sleep(2)  # Add delay between commands
-
-# async def test_duckduckgo_search(browser):
-#     """Test DuckDuckGo search using LLM-guided automation."""
-#     commands = [
-#         "go to duckduckgo.com",
-#         "find the search box, type 'python automation' and press Enter",
-#         "after results load, find and click the third search result link"
-#     ]
-#     for command in test_commands:
-#         logger.info(f"\nTesting command: {command}")
-#         try:
-#             plan = await agent.plan_actions(command)
-#             if plan:
-#                 logger.info("Successfully generated plan:")
-#                 logger.info(f"Description: {plan.get('plan_description')}")
-#                 logger.info("\nSteps:")
-#                 for step in plan.get('steps', []):
-#                     logger.info(f"\nStep {step.get('step_number')}:")
-#                     logger.info(f"Description: {step.get('description')}")
-#                     logger.info(f"Action: {step.get('action')}")
-#             else:
-#                 logger.warning("Failed to generate plan")
-#         except Exception as e:
-#             logger.error(f"Error: {str(e)}")
-    
-#     for command in commands:
-#         print(f"\nExecuting: {command}")
-#         result = await browser.interact(command)
-#         print(f"Result: {result}")
-#         # Add delay between commands
-#         await asyncio.sleep(2)
 
 async def main():
     """Main entry point for testing the browser interaction."""
@@ -152,7 +70,7 @@ async def main():
         
         try:
             print("\n=== Testing  ===")
-            await test_google_search()
+            await test_google_search(browser)
             
         except Exception as e:
             print(f"An error occurred: {str(e)}")
@@ -163,3 +81,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
