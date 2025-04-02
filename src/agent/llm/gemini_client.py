@@ -34,29 +34,57 @@ class GeminiAgent:
         USER COMMAND: "{user_command}"
         {context}
 
-        Create a detailed step-by-step plan that a browser automation system can follow to interact with a website. 
-        Ensure the automation system identifies appropriate selectors dynamically instead of assuming them. 
         For each step, if a selector is required, the system should first search the DOM using a combination of tag names, attributes, and text content before proceeding. 
         Ensure the automation system logs each step and selector it identifies. 
-        Return the plan in this exact JSON format. Make sure the JSON format is correct and doesn't contain extra text, formatting issues, or broken syntax. Do not keep anything in comments or outside double quotes. Do not add any selectors while waiting for the results.
-
+        Return the plan in this exact JSON format. Make sure the JSON format is correct and doesn't contain extra text, formatting issues, or broken syntax.
+        
+        Example for "login to github":
         {{
-            "plan_description": "Brief description of what we're going to do",
             "steps": [
                 {{
                     "step_number": 1,
-                    "description": "Human readable description of what this step does",
+                    "description": "Navigate to GitHub login page",
                     "action": {{
-                        "type": "navigation|click|type|wait|submit",
-                        "target": "What we're interacting with",
-                        "value": "Any value needed (e.g. URL, text to type)",
-                        "selectors": ["CSS selectors to find the element"]
+                        "type": "navigation",
+                        "target": "GitHub login page",
+                        "value": "https://github.com/login",
+                        "selectors": []
+                    }}
+                }},
+                {{
+                    "step_number": 2,
+                    "description": "Enter username",
+                    "action": {{
+                        "type": "type",
+                        "target": "username field",
+                        "value": "ENV:GITHUB_USERNAME",
+                        "selectors": ["#login_field", "input[name='login']"]
+                    }}
+                }},
+                {{
+                    "step_number": 3,
+                    "description": "Enter password",
+                    "action": {{
+                        "type": "type",
+                        "target": "password field",
+                        "value": "ENV:GITHUB_PASSWORD",
+                        "selectors": ["#password", "input[name='password']"]
+                    }}
+                }},
+                {{
+                    "step_number": 4,
+                    "description": "Click sign in button",
+                    "action": {{
+                        "type": "submit",
+                        "target": "login form",
+                        "value": "",
+                        "selectors": ["input[type='submit']", "button[type='submit']"]
                     }}
                 }}
             ]
         }}
 
-        Example for "go to github and search for python projects":
+                Example for "go to github and search for python projects":
         {{
             "plan_description": "Navigate to GitHub and perform a search for Python projects",
             "steps": [
@@ -102,74 +130,6 @@ class GeminiAgent:
                 }}
             ]
         }}
-
-        Example for "go to youtube and search for AI tutorial videos, and click on the 2nd result":
-        {{
-            "plan_description": "Navigate to YouTube, search for AI tutorial videos, and click on the 2nd result",
-            "steps": [
-                {{
-                    "step_number": 1,
-                    "description": "Navigate to YouTube homepage",
-                    "action": {{
-                        "type": "navigation",
-                        "target": "YouTube homepage",
-                        "value": "https://www.youtube.com",
-                        "selectors": []
-                    }}
-                }},
-                {{
-                    "step_number": 2,
-                    "description": "Click the search box to activate it",
-                    "action": {{
-                        "type": "click",
-                        "target": "search box",
-                        "value": "",
-                        "selectors": ["input#search", "input[name='search_query']"]
-                    }}
-                }},
-                {{
-                    "step_number": 3,
-                    "description": "Type search query",
-                    "action": {{
-                        "type": "type",
-                        "target": "search input",
-                        "value": "AI tutorial videos",
-                        "selectors": ["input#search", "input[name='search_query']"]
-                    }}
-                }},
-                {{
-                    "step_number": 4,
-                    "description": "Submit search",
-                    "action": {{
-                        "type": "submit",
-                        "target": "search form",
-                        "value": "",
-                        "selectors": ["button#search-icon-legacy", "button[type='submit']"]
-                    }}
-                }},
-                {{
-                    "step_number": 5,
-                    "description": "Wait for search results to load",
-                    "action": {{
-                        "type": "wait",
-                        "target": "search results",
-                        "value": "3000",
-                        "selectors": []
-                    }}
-                }},
-                {{
-                    "step_number": 6,
-                    "description": "Click on the 2nd search result",
-                    "action": {{
-                        "type": "click",
-                        "target": "second search result",
-                        "value": "",
-                        "selectors": ["#contents ytd-video-renderer:nth-of-type(2) a#thumbnail"]
-                    }}
-                }}
-            ]
-        }}
-
 
 
         Provide a complete plan with all necessary steps to accomplish: {user_command}
@@ -223,3 +183,4 @@ class GeminiAgent:
         except json.JSONDecodeError as e:
             logging.error(f"JSON decoding error: {e}")
             return {}  
+

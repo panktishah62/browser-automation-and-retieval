@@ -26,10 +26,9 @@ async def test_google_search(browser):
         
         # Test cases
     test_commands = [
-        # "go to youtube and search for python projects and Wait for results to load and click on 2nd result",
-        "go to duckduckgo and search for cars in images and open 2nd image",
-        # "login to github.com with username 'test' and password 'test123'",
-        # "go to amazon.com and search for headphones",
+        # "go to duckduckgo and search for cars in images and open 2nd image",
+        # "login to github.com and search python and click the 2nd result",
+        "go to google.com and search for headphones",
         # "go to github and search for python projects. Open 3rd one !"
     ]
     
@@ -57,7 +56,7 @@ async def main():
     config = BrowserConfig()
     
     # Initialize the Gemini agent with API key
-    agent = GeminiAgent(api_key=os.getenv('GOOGLE_GEMINI_API_KEY'))
+    agent = GeminiAgent(api_key=os.getenv('GOOGLE_API_KEY'))
     
     async with async_playwright() as p:
         browser_type = getattr(p, config.browser_type)

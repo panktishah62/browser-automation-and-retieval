@@ -1,22 +1,38 @@
 from typing import Dict, List
 import logging
 from playwright.async_api import TimeoutError, Page
+from dotenv import load_dotenv
+import os
 
 logger = logging.getLogger("ai-browser-agent")
 
 class CommandExecutor:
     """Executes browser commands based on LLM-provided strategies"""
     
+    def __init__(self):
+        load_dotenv()  # Load environment variables
+
+    def _resolve_env_value(self, value: str) -> str:
+        """Resolve value from environment variables if needed"""
+        if isinstance(value, str) and value.startswith("ENV:"):
+            env_var = value.split("ENV:")[1]
+            return os.getenv(env_var, "")
+        return value
+
     async def execute_action(self, page: Page, action: Dict) -> Dict:
         """Execute a single browser action"""
         try:
             action_type = action["action"]
             
+            # Resolve any ENV variables in the value
+            if "value" in action:
+                action["value"] = self._resolve_env_value(action["value"])
+            
             if action_type == "navigation":
                 logger.info(f"Navigating to: {action['value']}")
                 response = await page.goto(
                     action["value"],
-                    wait_until="networkidle",
+                    # wait_until="networkidle",
                     timeout=60000
                 )
                 # Wait for page to be ready
@@ -107,6 +123,17 @@ class CommandExecutor:
                             logger.error(f"Submit action failed for selector {selector}: {e}")
                             continue
                 return {"success": False, "message": "Submit action failed"}
+                
+            elif action_type == "press":
+                try:
+                    key = action["value"]
+                    await page.keyboard.press(key)
+                    # await page.wait_for_load_state("networkidle")
+                    logger.info(f"Successfully pressed key: {key}")
+                    return {"success": True}
+                except Exception as e:
+                    logger.error(f"Press action failed: {e}")
+                    return {"success": False, "message": f"Press action failed: {str(e)}"}
                 
             return {
                 "success": False,
